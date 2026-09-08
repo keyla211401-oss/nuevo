@@ -1404,22 +1404,29 @@ let ticGameOver = false;
 
 let ticMode = null;
 
+let ticComputerThinking = false;
+
 let ticXWins = 0;
 
 let ticOWins = 0;
 
+
+/* =========================================================
+   CREAR TIC TAC TOE
+   ========================================================= */
 
 function createTicTacToe() {
 
     ticBoard =
         Array(9).fill("");
 
-
     ticPlayer = "X";
 
     ticGameOver = false;
 
     ticMode = null;
+
+    ticComputerThinking = false;
 
 
     gameContent.innerHTML = `
@@ -1509,6 +1516,8 @@ function startTicMode(mode) {
 
     ticGameOver = false;
 
+    ticComputerThinking = false;
+
 
     renderTicTacToe();
 }
@@ -1526,9 +1535,45 @@ function renderTicTacToe() {
         );
 
 
+    if (!area) {
+        return;
+    }
+
+
     area.classList.remove(
         "hidden"
     );
+
+
+    let turnText = "";
+
+
+    if (ticMode === "computer") {
+
+        if (ticPlayer === "X") {
+
+            turnText =
+                "👤 Tu turno — tú eres ❌";
+
+        } else {
+
+            turnText =
+                "🤖 Turno de la computadora — es ⭕";
+        }
+
+    } else {
+
+        if (ticPlayer === "X") {
+
+            turnText =
+                "👤 Turno del Jugador 1 — ❌";
+
+        } else {
+
+            turnText =
+                "👤 Turno del Jugador 2 — ⭕";
+        }
+    }
 
 
     area.innerHTML = `
@@ -1536,15 +1581,15 @@ function renderTicTacToe() {
         <div class="game-info-bar">
 
             <div class="info-pill">
-                ${ticMode === "computer"
-                    ? "🤖 Tú vs Computadora"
-                    : "👩‍🤝‍👩 Dos jugadores"
+                ${
+                    ticMode === "computer"
+                        ? "🤖 Tú vs Computadora"
+                        : "👥 Dos jugadores"
                 }
             </div>
 
             <div class="info-pill">
-                Turno:
-                ${ticPlayer}
+                ${turnText}
             </div>
 
         </div>
@@ -1575,15 +1620,16 @@ function renderTicTacToe() {
             id="ticResult"
             class="result-message info"
         >
-            🎮 Turno de ${ticPlayer}
+            ${
+                ticGameOver
+                    ? ""
+                    : turnText
+            }
         </div>
 
 
         <div
-            style="
-                text-align:center;
-                margin-top:15px;
-            "
+            class="game-center-buttons"
         >
 
             <button
@@ -1593,7 +1639,16 @@ function renderTicTacToe() {
                 🔄 Nueva partida
             </button>
 
+
+            <button
+                class="game-action secondary"
+                onclick="createTicTacToe()"
+            >
+                🔀 Cambiar modo
+            </button>
+
         </div>
+
     `;
 
 
@@ -1615,8 +1670,31 @@ function renderTicTacToe() {
             cell.className =
                 "tic-cell";
 
+
             cell.textContent =
                 value;
+
+
+            /*
+             * En 1 jugador, el humano
+             * solamente puede jugar cuando
+             * es turno de X.
+             *
+             * En 2 jugadores ambos pueden
+             * jugar según el turno.
+             */
+
+            if (
+                ticGameOver ||
+                ticComputerThinking ||
+                (
+                    ticMode === "computer" &&
+                    ticPlayer === "O"
+                )
+            ) {
+
+                cell.disabled = true;
+            }
 
 
             cell.addEventListener(
@@ -1643,9 +1721,39 @@ function renderTicTacToe() {
 
 function playTic(index) {
 
+    /*
+     * No permitir jugadas cuando terminó
+     * la partida.
+     */
+
+    if (ticGameOver) {
+        return;
+    }
+
+
+    /*
+     * No permitir tocar una casilla ocupada.
+     */
+
     if (
-        ticGameOver ||
         ticBoard[index] !== ""
+    ) {
+
+        return;
+    }
+
+
+    /*
+     * En modo computadora, el usuario
+     * solamente juega como X.
+     */
+
+    if (
+        ticMode === "computer" &&
+        (
+            ticPlayer === "O" ||
+            ticComputerThinking
+        )
     ) {
 
         return;
@@ -1655,6 +1763,10 @@ function playTic(index) {
     ticBoard[index] =
         ticPlayer;
 
+
+    /*
+     * Comprobar ganador.
+     */
 
     if (
         checkTicWinner()
@@ -1668,6 +1780,10 @@ function playTic(index) {
     }
 
 
+    /*
+     * Comprobar empate.
+     */
+
     if (
         ticBoard.every(
             cell => cell !== ""
@@ -1679,6 +1795,10 @@ function playTic(index) {
         return;
     }
 
+
+    /*
+     * Cambiar de jugador.
+     */
 
     ticPlayer =
         ticPlayer === "X"
@@ -1690,30 +1810,47 @@ function playTic(index) {
 
 
     /*
-     * Si es contra computadora y ahora
-     * le toca a O, la computadora juega.
+     * Si es 1 jugador y ahora
+     * le toca a O, juega la computadora.
      */
 
     if (
         ticMode === "computer" &&
-        ticPlayer === "O"
+        ticPlayer === "O" &&
+        !ticGameOver
     ) {
 
+        ticComputerThinking = true;
+
+        renderTicTacToe();
+
+
         setTimeout(
-            computerTicMove,
-            500
+            function () {
+
+                computerTicMove();
+
+            },
+            600
         );
     }
 }
 
 
 /* =========================================================
-   COMPUTADORA
+   COMPUTADORA TIC TAC TOE
    ========================================================= */
 
 function computerTicMove() {
 
-    if (ticGameOver) {
+    if (
+        ticMode !== "computer" ||
+        ticPlayer !== "O" ||
+        ticGameOver
+    ) {
+
+        ticComputerThinking = false;
+
         return;
     }
 
@@ -1721,107 +1858,148 @@ function computerTicMove() {
     const empty =
         ticBoard
             .map(
-                (value, index) =>
-                    value === ""
+                function (value, index) {
+
+                    return value === ""
                         ? index
-                        : null
+                        : null;
+
+                }
             )
             .filter(
-                index => index !== null
+                function (index) {
+
+                    return index !== null;
+
+                }
             );
 
 
-    if (empty.length === 0) {
+    if (
+        empty.length === 0
+    ) {
+
+        ticComputerThinking = false;
+
         return;
     }
 
 
+    let move = null;
+
+
     /*
-     * Primero intenta ganar.
+     * 1. La computadora intenta ganar.
      */
 
-    for (
-        const index of empty
+    move =
+        findTicWinningMove("O");
+
+
+    /*
+     * 2. Si no puede ganar,
+     * intenta bloquear al jugador.
+     */
+
+    if (
+        move === null
     ) {
 
-        ticBoard[index] = "O";
-
-
-        if (
-            checkTicWinner()
-        ) {
-
-            ticPlayer = "O";
-
-            terminarTic("O");
-
-            return;
-
-        }
-
-
-        ticBoard[index] = "";
+        move =
+            findTicWinningMove("X");
     }
 
 
     /*
-     * Después intenta bloquear a X.
+     * 3. Intenta tomar el centro.
      */
 
-    for (
-        const index of empty
+    if (
+        move === null &&
+        ticBoard[4] === ""
     ) {
 
-        ticBoard[index] = "X";
-
-
-        if (
-            checkTicWinner()
-        ) {
-
-            ticBoard[index] = "O";
-
-            ticPlayer = "O";
-
-            renderTicTacToe();
-
-            return;
-        }
-
-
-        ticBoard[index] = "";
+        move = 4;
     }
 
 
     /*
-     * Si no hay jugada especial,
-     * elige una posición aleatoria.
+     * 4. Si el centro está ocupado,
+     * intenta una esquina.
      */
 
-    const randomIndex =
-        empty[
-            Math.floor(
-                Math.random() *
-                empty.length
-            )
-        ];
+    if (
+        move === null
+    ) {
+
+        const corners =
+            [0, 2, 6, 8].filter(
+                function (index) {
+
+                    return ticBoard[index] === "";
+
+                }
+            );
 
 
-    ticBoard[randomIndex] =
+        if (
+            corners.length > 0
+        ) {
+
+            move =
+                corners[
+                    Math.floor(
+                        Math.random() *
+                        corners.length
+                    )
+                ];
+        }
+    }
+
+
+    /*
+     * 5. Si no hay una jugada especial,
+     * elige una casilla libre.
+     */
+
+    if (
+        move === null
+    ) {
+
+        move =
+            empty[
+                Math.floor(
+                    Math.random() *
+                    empty.length
+                )
+            ];
+    }
+
+
+    ticBoard[move] =
         "O";
 
+
+    ticComputerThinking = false;
+
+
+    /*
+     * Comprobar si ganó la computadora.
+     */
 
     if (
         checkTicWinner()
     ) {
-
-        ticPlayer = "O";
 
         terminarTic("O");
 
         return;
     }
 
+
+    /*
+     * Comprobar empate.
+     */
 
     if (
         ticBoard.every(
@@ -1835,9 +2013,87 @@ function computerTicMove() {
     }
 
 
+    /*
+     * Regresar el turno al jugador.
+     */
+
     ticPlayer = "X";
 
+
     renderTicTacToe();
+}
+
+
+/* =========================================================
+   BUSCAR JUGADA GANADORA
+   ========================================================= */
+
+function findTicWinningMove(
+    player
+) {
+
+    const combinations = [
+
+        [0, 1, 2],
+
+        [3, 4, 5],
+
+        [6, 7, 8],
+
+        [0, 3, 6],
+
+        [1, 4, 7],
+
+        [2, 5, 8],
+
+        [0, 4, 8],
+
+        [2, 4, 6]
+
+    ];
+
+
+    for (
+        const combination
+        of combinations
+    ) {
+
+        const [a, b, c] =
+            combination;
+
+
+        if (
+            ticBoard[a] === player &&
+            ticBoard[b] === player &&
+            ticBoard[c] === ""
+        ) {
+
+            return c;
+        }
+
+
+        if (
+            ticBoard[a] === player &&
+            ticBoard[c] === player &&
+            ticBoard[b] === ""
+        ) {
+
+            return b;
+        }
+
+
+        if (
+            ticBoard[b] === player &&
+            ticBoard[c] === player &&
+            ticBoard[a] === ""
+        ) {
+
+            return a;
+        }
+    }
+
+
+    return null;
 }
 
 
@@ -1891,20 +2147,18 @@ function checkTicWinner() {
    TERMINAR TIC
    ========================================================= */
 
-function terminarTic(result) {
+function terminarTic(
+    result
+) {
+
+    if (ticGameOver) {
+        return;
+    }
+
 
     ticGameOver = true;
 
-
-    const area =
-        document.getElementById(
-            "ticGameArea"
-        );
-
-
-    if (!area) {
-        return;
-    }
+    ticComputerThinking = false;
 
 
     let message = "";
@@ -1913,12 +2167,25 @@ function terminarTic(result) {
         "result-message info";
 
 
-    if (result === "draw") {
+    /*
+     * EMPATE
+     */
+
+    if (
+        result === "draw"
+    ) {
 
         message =
-            "🤝 ¡Empate! Nadie ganó esta partida.";
+            "🤝 ¡EMPATE! Nadie ganó esta partida. 💜";
 
-    } else if (
+    }
+
+
+    /*
+     * GANÓ X
+     */
+
+    else if (
         result === "X"
     ) {
 
@@ -1926,13 +2193,31 @@ function terminarTic(result) {
 
         registrarVictoria();
 
-        message =
-            "🎉 ¡GANÓ X! ¡Muy buena jugada!";
+
+        if (
+            ticMode === "computer"
+        ) {
+
+            message =
+                "🎉🏆 ¡GANASTE! Muy buena jugada. ❌";
+
+        } else {
+
+            message =
+                "🎉🏆 ¡GANÓ EL JUGADOR 1! ❌";
+        }
+
 
         className =
             "result-message win";
+    }
 
-    } else {
+
+    /*
+     * GANÓ O
+     */
+
+    else {
 
         ticOWins++;
 
@@ -1943,8 +2228,9 @@ function terminarTic(result) {
 
             registrarDerrota();
 
+
             message =
-                "🤖 La computadora ganó esta vez.";
+                "🤖🏆 ¡GANÓ LA COMPUTADORA! Inténtalo otra vez. 💪";
 
             className =
                 "result-message lose";
@@ -1953,8 +2239,9 @@ function terminarTic(result) {
 
             registrarVictoria();
 
+
             message =
-                "🎉 ¡GANÓ O! ¡Muy buena partida!";
+                "🎉🏆 ¡GANÓ EL JUGADOR 2! ⭕";
 
             className =
                 "result-message win";
@@ -2016,8 +2303,10 @@ const memoryAnimals = [
 function createMemoryGame() {
 
     memoryCards =
-        [...memoryAnimals,
-         ...memoryAnimals];
+        [
+            ...memoryAnimals,
+            ...memoryAnimals
+        ];
 
 
     memoryCards.sort(
@@ -2133,6 +2422,11 @@ function renderMemory() {
         );
 
 
+    if (!board) {
+        return;
+    }
+
+
     board.innerHTML = "";
 
 
@@ -2203,16 +2497,30 @@ function renderMemory() {
     );
 
 
-    document.getElementById(
-        "memoryMoves"
-    ).textContent =
-        memoryMoves;
+    const movesElement =
+        document.getElementById(
+            "memoryMoves"
+        );
 
 
-    document.getElementById(
-        "memoryPairs"
-    ).textContent =
-        memoryMatched.length / 2;
+    const pairsElement =
+        document.getElementById(
+            "memoryPairs"
+        );
+
+
+    if (movesElement) {
+
+        movesElement.textContent =
+            memoryMoves;
+    }
+
+
+    if (pairsElement) {
+
+        pairsElement.textContent =
+            memoryMatched.length / 2;
+    }
 }
 
 
@@ -2283,6 +2591,12 @@ function flipMemory(index) {
 
         } else {
 
+            /*
+             * Las dos cartas permanecen
+             * visibles un momento para que
+             * el jugador pueda verlas.
+             */
+
             setTimeout(
                 function () {
 
@@ -2317,6 +2631,11 @@ function terminarMemoria() {
         document.getElementById(
             "memoryResult"
         );
+
+
+    if (!result) {
+        return;
+    }
 
 
     result.className =
@@ -2618,6 +2937,11 @@ function renderMinesweeper() {
         document.getElementById(
             "mineBoard"
         );
+
+
+    if (!board) {
+        return;
+    }
 
 
     board.innerHTML = "";
