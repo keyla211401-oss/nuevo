@@ -1,28 +1,53 @@
 /* =========================================================
    CODE POWER
-   JavaScript del proyecto
-========================================================= */
+   JavaScript - Proyecto escolar
+   ========================================================= */
 
 
 /* =========================================================
-   VARIABLES PRINCIPALES
-========================================================= */
+   VARIABLES GENERALES
+   ========================================================= */
 
 let currentGame = null;
 
-const loginScreen = document.getElementById("loginScreen");
-const mainApp = document.getElementById("mainApp");
+let currentUser = "";
 
-const loginForm = document.getElementById("loginForm");
-const usernameInput = document.getElementById("username");
-const passwordInput = document.getElementById("password");
-const loginMessage = document.getElementById("loginMessage");
+let totalWins = 0;
+let totalLosses = 0;
+
+let gameTimer = null;
+let gameSeconds = 0;
+
+
+/* =========================================================
+   ELEMENTOS DEL LOGIN
+   ========================================================= */
+
+const loginScreen =
+    document.getElementById("loginScreen");
+
+const mainApp =
+    document.getElementById("mainApp");
+
+const loginForm =
+    document.getElementById("loginForm");
+
+const usernameInput =
+    document.getElementById("username");
+
+const passwordInput =
+    document.getElementById("password");
+
+const loginMessage =
+    document.getElementById("loginMessage");
 
 const togglePassword =
     document.getElementById("togglePassword");
 
-const logoutButton =
-    document.getElementById("logoutButton");
+
+/* =========================================================
+   ELEMENTOS PRINCIPALES
+   ========================================================= */
 
 const gameModal =
     document.getElementById("gameModal");
@@ -30,385 +55,1053 @@ const gameModal =
 const gameContent =
     document.getElementById("gameContent");
 
+const helpModal =
+    document.getElementById("helpModal");
+
+const welcomeUser =
+    document.getElementById("welcomeUser");
+
+const totalWinsElement =
+    document.getElementById("totalWins");
+
+const totalLossesElement =
+    document.getElementById("totalLosses");
+
 
 /* =========================================================
    LOGIN
-========================================================= */
+   ========================================================= */
 
-loginForm.addEventListener("submit", function(event) {
+loginForm.addEventListener(
+    "submit",
+    function (event) {
 
-    event.preventDefault();
+        event.preventDefault();
 
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value.trim();
+        const username =
+            usernameInput.value.trim();
 
-    if (username === "" || password === "") {
+        const password =
+            passwordInput.value.trim();
 
-        loginMessage.textContent =
-            "⚠️ Completa todos los campos.";
 
-        loginMessage.style.color = "#d95d69";
+        if (username === "") {
 
-        return;
+            mostrarMensajeLogin(
+                "⚠️ Escribe tu nombre.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        /*
+         * La contraseña solamente puede ser
+         * un número del 1 al 9.
+         */
+
+        if (!/^[1-9]$/.test(password)) {
+
+            mostrarMensajeLogin(
+                "🔑 La contraseña debe ser un número del 1 al 9.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        currentUser = username;
+
+
+        mostrarMensajeLogin(
+            "✅ ¡Bienvenida/o " + username + "!",
+            "success"
+        );
+
+
+        /*
+         * Aquí se puede conectar EmailJS.
+         * No enviamos la contraseña.
+         */
+
+        enviarNotificacionCorreo(username);
+
+
+        setTimeout(
+            function () {
+
+                loginScreen.classList.add("hidden");
+
+                mainApp.classList.remove("hidden");
+
+                welcomeUser.textContent =
+                    "¡Hola, " + currentUser + "! 🎮";
+
+                showSection("home");
+
+            },
+            700
+        );
     }
-
-    loginMessage.textContent =
-        "✅ Bienvenido/a " + username;
-
-    loginMessage.style.color = "#58a878";
-
-    setTimeout(function() {
-
-        loginScreen.classList.add("hidden");
-        mainApp.classList.remove("hidden");
-
-        showSection("home");
-
-    }, 500);
-
-});
+);
 
 
 /* =========================================================
-   MOSTRAR / OCULTAR CONTRASEÑA
-========================================================= */
+   MENSAJE LOGIN
+   ========================================================= */
 
-togglePassword.addEventListener("click", function() {
+function mostrarMensajeLogin(
+    mensaje,
+    tipo
+) {
 
-    if (passwordInput.type === "password") {
+    loginMessage.textContent = mensaje;
 
-        passwordInput.type = "text";
-        togglePassword.textContent = "🙈";
+    if (tipo === "error") {
+
+        loginMessage.style.color =
+            "#ef476f";
 
     } else {
 
-        passwordInput.type = "password";
-        togglePassword.textContent = "👁";
-
+        loginMessage.style.color =
+            "#38b000";
     }
-
-});
-
-
-/* =========================================================
-   CERRAR SESIÓN
-========================================================= */
-
-logoutButton.addEventListener("click", function() {
-
-    mainApp.classList.add("hidden");
-    loginScreen.classList.remove("hidden");
-
-    usernameInput.value = "";
-    passwordInput.value = "";
-
-    loginMessage.textContent = "";
-
-    showSection("home");
-
-});
-
-
-/* =========================================================
-   NAVEGACIÓN
-========================================================= */
-
-const navButtons =
-    document.querySelectorAll(".nav-button");
-
-navButtons.forEach(function(button) {
-
-    button.addEventListener("click", function() {
-
-        const section =
-            button.dataset.section;
-
-        showSection(section);
-
-    });
-
-});
-
-
-function showSection(section) {
-
-    const homeSection =
-        document.getElementById("homeSection");
-
-    const aboutSection =
-        document.getElementById("aboutSection");
-
-    if (section === "home") {
-
-        homeSection.classList.remove("hidden");
-        aboutSection.classList.add("hidden");
-
-    }
-
-    if (section === "about") {
-
-        homeSection.classList.add("hidden");
-        aboutSection.classList.remove("hidden");
-
-    }
-
-
-    navButtons.forEach(function(button) {
-
-        button.classList.remove("active");
-
-        if (button.dataset.section === section) {
-            button.classList.add("active");
-        }
-
-    });
-
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-    });
-
 }
 
 
 /* =========================================================
-   IR A LOS JUEGOS
-========================================================= */
+   MOSTRAR / OCULTAR CONTRASEÑA
+   ========================================================= */
+
+togglePassword.addEventListener(
+    "click",
+    function () {
+
+        if (passwordInput.type === "password") {
+
+            passwordInput.type = "text";
+
+            togglePassword.textContent = "🙈";
+
+        } else {
+
+            passwordInput.type = "password";
+
+            togglePassword.textContent = "👁️";
+        }
+    }
+);
+
+
+/* =========================================================
+   SOLO PERMITIR 1 AL 9
+   ========================================================= */
+
+passwordInput.addEventListener(
+    "input",
+    function () {
+
+        this.value =
+            this.value.replace(/[^1-9]/g, "");
+
+    }
+);
+
+
+/* =========================================================
+   EMAIL
+   ========================================================= */
+
+/*
+ * IMPORTANTE:
+ *
+ * Para que llegue un correo de verdad debes configurar
+ * EmailJS.
+ *
+ * No pongas aquí la contraseña del usuario.
+ *
+ * Después de configurar EmailJS debes colocar:
+ *
+ * EMAILJS_PUBLIC_KEY
+ * EMAILJS_SERVICE_ID
+ * EMAILJS_TEMPLATE_ID
+ *
+ */
+
+function enviarNotificacionCorreo(nombre) {
+
+    /*
+     * Esta función queda preparada.
+     *
+     * Si EmailJS no está instalado, no pasa nada:
+     * el juego seguirá funcionando.
+     */
+
+    if (
+        typeof emailjs === "undefined"
+    ) {
+
+        console.log(
+            "EmailJS todavía no está configurado."
+        );
+
+        return;
+    }
+
+
+    const templateParams = {
+
+        usuario: nombre,
+
+        fecha:
+            new Date().toLocaleDateString(
+                "es-CO"
+            ),
+
+        hora:
+            new Date().toLocaleTimeString(
+                "es-CO"
+            ),
+
+        destinatario:
+            "keylamirandasena690@gmail.com"
+    };
+
+
+    emailjs.send(
+        "TU_SERVICE_ID",
+        "TU_TEMPLATE_ID",
+        templateParams
+    )
+    .then(
+        function () {
+
+            console.log(
+                "Notificación enviada."
+            );
+
+        }
+    )
+    .catch(
+        function (error) {
+
+            console.log(
+                "No se pudo enviar el correo:",
+                error
+            );
+
+        }
+    );
+}
+
+
+/* =========================================================
+   NAVEGACIÓN
+   ========================================================= */
+
+document
+    .querySelectorAll(".nav-button[data-section]")
+    .forEach(
+        function (button) {
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    showSection(
+                        button.dataset.section
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+function showSection(section) {
+
+    const home =
+        document.getElementById(
+            "homeSection"
+        );
+
+    const about =
+        document.getElementById(
+            "aboutSection"
+        );
+
+
+    home.classList.add("hidden");
+
+    about.classList.add("hidden");
+
+
+    if (section === "home") {
+
+        home.classList.remove("hidden");
+
+    }
+
+
+    if (section === "about") {
+
+        about.classList.remove("hidden");
+
+    }
+
+
+    document
+        .querySelectorAll(
+            ".nav-button[data-section]"
+        )
+        .forEach(
+            function (button) {
+
+                button.classList.remove(
+                    "active"
+                );
+
+                if (
+                    button.dataset.section ===
+                    section
+                ) {
+
+                    button.classList.add(
+                        "active"
+                    );
+                }
+
+            }
+        );
+
+
+    window.scrollTo(
+        {
+            top: 0,
+            behavior: "smooth"
+        }
+    );
+}
+
+
+/* =========================================================
+   IR A JUEGOS
+   ========================================================= */
 
 function scrollToGames() {
 
     const games =
         document.getElementById("games");
 
-    if (games) {
-
-        games.scrollIntoView({
+    games.scrollIntoView(
+        {
             behavior: "smooth"
-        });
+        }
+    );
+}
 
-    }
 
+/* =========================================================
+   CERRAR SESIÓN
+   ========================================================= */
+
+document
+    .getElementById("logoutButton")
+    .addEventListener(
+        "click",
+        function () {
+
+            if (
+                confirm(
+                    "¿Quieres cerrar tu sesión?"
+                )
+            ) {
+
+                cerrarSesion();
+            }
+
+        }
+    );
+
+
+function cerrarSesion() {
+
+    detenerCronometro();
+
+    currentUser = "";
+
+    totalWins = 0;
+
+    totalLosses = 0;
+
+    actualizarMarcador();
+
+
+    mainApp.classList.add("hidden");
+
+    loginScreen.classList.remove(
+        "hidden"
+    );
+
+
+    usernameInput.value = "";
+
+    passwordInput.value = "";
+
+    loginMessage.textContent = "";
+
+    closeGame();
+
+    showSection("home");
 }
 
 
 /* =========================================================
    ABRIR JUEGO
-========================================================= */
+   ========================================================= */
 
 function openGame(game) {
 
     currentGame = game;
 
-    gameModal.classList.remove("hidden");
+    gameModal.classList.remove(
+        "hidden"
+    );
+
+
+    detenerCronometro();
+
 
     if (game === "hangman") {
+
         createHangman();
-    }
 
-    if (game === "number") {
+    } else if (game === "number") {
+
         createNumberGame();
-    }
 
-    if (game === "tic") {
+    } else if (game === "tic") {
+
         createTicTacToe();
-    }
 
-    if (game === "memory") {
+    } else if (game === "memory") {
+
         createMemoryGame();
-    }
 
-    if (game === "mines") {
+    } else if (game === "mines") {
+
         createMinesweeper();
     }
-
 }
 
 
 /* =========================================================
    CERRAR JUEGO
-========================================================= */
+   ========================================================= */
 
 function closeGame() {
 
-    currentGame = null;
+    detenerCronometro();
 
-    gameModal.classList.add("hidden");
+    currentGame = null;
 
     gameContent.innerHTML = "";
 
+    gameModal.classList.add(
+        "hidden"
+    );
 }
 
 
 /* =========================================================
-   1. AHORCADO
-========================================================= */
+   CRONÓMETRO
+   ========================================================= */
+
+function iniciarCronometro(elementId) {
+
+    detenerCronometro();
+
+    gameSeconds = 0;
+
+    const element =
+        document.getElementById(elementId);
+
+
+    if (!element) {
+        return;
+    }
+
+
+    element.textContent =
+        "00:00";
+
+
+    gameTimer =
+        setInterval(
+            function () {
+
+                gameSeconds++;
+
+                const minutes =
+                    Math.floor(
+                        gameSeconds / 60
+                    );
+
+                const seconds =
+                    gameSeconds % 60;
+
+
+                element.textContent =
+                    String(minutes).padStart(
+                        2,
+                        "0"
+                    )
+                    +
+                    ":"
+                    +
+                    String(seconds).padStart(
+                        2,
+                        "0"
+                    );
+
+            },
+            1000
+        );
+}
+
+
+function detenerCronometro() {
+
+    if (gameTimer) {
+
+        clearInterval(gameTimer);
+
+        gameTimer = null;
+    }
+}
+
+
+/* =========================================================
+   MARCADOR
+   ========================================================= */
+
+function registrarVictoria() {
+
+    totalWins++;
+
+    actualizarMarcador();
+}
+
+
+function registrarDerrota() {
+
+    totalLosses++;
+
+    actualizarMarcador();
+}
+
+
+function actualizarMarcador() {
+
+    if (totalWinsElement) {
+
+        totalWinsElement.textContent =
+            totalWins;
+    }
+
+    if (totalLossesElement) {
+
+        totalLossesElement.textContent =
+            totalLosses;
+    }
+}
+
+
+/* =========================================================
+   AHORCADO
+   ========================================================= */
 
 let hangmanWord = "";
+
 let hangmanGuessed = [];
+
 let hangmanAttempts = 6;
 
+let hangmanGameOver = false;
+
+
 const hangmanWords = [
-    "COMPUTADOR",
-    "JAVASCRIPT",
-    "PROGRAMACION",
-    "TECLADO",
-    "INTERNET",
-    "VIDEOJUEGO",
-    "PANTALLA",
-    "CODIGO"
+
+    {
+        word: "JAVASCRIPT",
+        hint: "Lenguaje que utilizamos para programar la interacción.",
+        category: "Programación"
+    },
+
+    {
+        word: "COMPUTADORA",
+        hint: "Máquina que usamos para realizar diferentes tareas.",
+        category: "Tecnología"
+    },
+
+    {
+        word: "TECLADO",
+        hint: "Tiene letras y números y sirve para escribir.",
+        category: "Computación"
+    },
+
+    {
+        word: "INTERNET",
+        hint: "Red que conecta computadoras de todo el mundo.",
+        category: "Tecnología"
+    },
+
+    {
+        word: "CODIGO",
+        hint: "Conjunto de instrucciones que escribimos al programar.",
+        category: "Programación"
+    },
+
+    {
+        word: "PANTALLA",
+        hint: "Lugar donde podemos ver imágenes e información.",
+        category: "Computación"
+    },
+
+    {
+        word: "SENA",
+        hint: "Institución donde se realizan muchos proyectos de formación.",
+        category: "Educación"
+    },
+
+    {
+        word: "VIDEOJUEGO",
+        hint: "Actividad digital creada para entretener.",
+        category: "Diversión"
+    }
+
 ];
 
 
 function createHangman() {
 
-    hangmanWord =
+    const random =
         hangmanWords[
             Math.floor(
-                Math.random() * hangmanWords.length
+                Math.random() *
+                hangmanWords.length
             )
         ];
 
+
+    hangmanWord =
+        random.word;
+
     hangmanGuessed = [];
+
     hangmanAttempts = 6;
 
-    renderHangman();
-
-}
-
-
-function renderHangman() {
-
-    let wordDisplay = "";
-
-    for (let letter of hangmanWord) {
-
-        if (hangmanGuessed.includes(letter)) {
-            wordDisplay += letter + " ";
-        } else {
-            wordDisplay += "_ ";
-        }
-
-    }
-
-
-    let letters = "";
-
-    for (
-        let i = 65;
-        i <= 90;
-        i++
-    ) {
-
-        const letter =
-            String.fromCharCode(i);
-
-        letters += `
-            <button
-                class="letter-button"
-                onclick="guessHangman('${letter}')"
-                ${hangmanGuessed.includes(letter)
-                    ? "disabled"
-                    : ""}
-            >
-                ${letter}
-            </button>
-        `;
-
-    }
+    hangmanGameOver = false;
 
 
     gameContent.innerHTML = `
 
-        <div class="game-title">
+        <div class="game-header">
 
-            <h2>🔤 Ahorcado</h2>
+            <div class="emoji">🔤</div>
+
+            <h2>Ahorcado</h2>
 
             <p>
-                Descubre la palabra secreta.
+                Descubre la palabra antes de perder tus vidas.
             </p>
 
         </div>
 
-        <div class="hangman-word">
-            ${wordDisplay}
+        <div class="game-info-bar">
+
+            <div class="info-pill">
+                ❤️ Vidas:
+                <span id="hangmanLives">6</span>
+            </div>
+
+            <div class="info-pill">
+                ⏱️
+                <span id="hangmanTime">00:00</span>
+            </div>
+
+            <div class="info-pill">
+                📚 Categoría:
+                ${random.category}
+            </div>
+
         </div>
 
-        <div class="hangman-attempts">
-            Intentos restantes:
-            <strong>${hangmanAttempts}</strong>
+
+        <div class="hangman-layout">
+
+            <div class="hangman-drawing">
+
+                <div
+                    id="hangmanPerson"
+                    class="hangman-person"
+                >
+                    🙂
+                </div>
+
+            </div>
+
+
+            <div>
+
+                <div
+                    id="hangmanWord"
+                    class="hangman-word"
+                ></div>
+
+
+                <div class="hangman-hint">
+
+                    💡 <strong>Pista:</strong>
+                    ${random.hint}
+
+                </div>
+
+
+                <div
+                    id="hangmanKeyboard"
+                    class="hangman-keyboard"
+                ></div>
+
+            </div>
+
         </div>
 
-        <div class="hangman-letters">
-            ${letters}
+
+        <div
+            id="hangmanResult"
+            class="result-message info"
+        >
+            ¡Comencemos! 💜
         </div>
 
-        <p
-            id="hangmanMessage"
-            class="game-status"
-        ></p>
 
+        <div class="game-center-buttons">
+
+            <button
+                class="game-action"
+                onclick="createHangman()"
+            >
+                🔄 Nueva palabra
+            </button>
+
+        </div>
     `;
 
+
+    actualizarAhorcado();
+
+    crearTecladoAhorcado();
+
+    iniciarCronometro(
+        "hangmanTime"
+    );
 }
 
 
-function guessHangman(letter) {
+/* =========================================================
+   DIBUJO DEL AHORCADO
+   ========================================================= */
 
-    if (hangmanGuessed.includes(letter)) {
+function obtenerDibujoAhorcado() {
+
+    const dibujos = [
+
+        "🙂",
+
+        "😟",
+
+        "😰",
+
+        "😨",
+
+        "😵",
+
+        "😖",
+
+        "💀"
+
+    ];
+
+
+    return dibujos[
+        6 - hangmanAttempts
+    ];
+}
+
+
+function actualizarAhorcado() {
+
+    const wordElement =
+        document.getElementById(
+            "hangmanWord"
+        );
+
+    if (!wordElement) {
         return;
     }
 
-    hangmanGuessed.push(letter);
 
-    if (!hangmanWord.includes(letter)) {
+    let display = "";
+
+
+    for (
+        const letter of hangmanWord
+    ) {
+
+        if (
+            hangmanGuessed.includes(
+                letter
+            )
+        ) {
+
+            display += letter + " ";
+
+        } else {
+
+            display += "_ ";
+        }
+    }
+
+
+    wordElement.textContent =
+        display;
+
+
+    const lives =
+        document.getElementById(
+            "hangmanLives"
+        );
+
+
+    if (lives) {
+
+        lives.textContent =
+            hangmanAttempts;
+    }
+
+
+    const person =
+        document.getElementById(
+            "hangmanPerson"
+        );
+
+
+    if (person) {
+
+        person.textContent =
+            obtenerDibujoAhorcado();
+    }
+
+
+    const ganado =
+        [...hangmanWord]
+            .every(
+                letter =>
+                    hangmanGuessed.includes(
+                        letter
+                    )
+            );
+
+
+    if (ganado) {
+
+        terminarAhorcado(true);
+    }
+}
+
+
+/* =========================================================
+   TECLADO AHORCADO
+   ========================================================= */
+
+function crearTecladoAhorcado() {
+
+    const keyboard =
+        document.getElementById(
+            "hangmanKeyboard"
+        );
+
+
+    if (!keyboard) {
+        return;
+    }
+
+
+    keyboard.innerHTML = "";
+
+
+    const letters =
+        "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
+
+
+    for (
+        const letter of letters
+    ) {
+
+        const button =
+            document.createElement(
+                "button"
+            );
+
+
+        button.textContent =
+            letter;
+
+        button.className =
+            "letter-button";
+
+
+        button.addEventListener(
+            "click",
+            function () {
+
+                jugarAhorcado(
+                    letter,
+                    button
+                );
+
+            }
+        );
+
+
+        keyboard.appendChild(
+            button
+        );
+    }
+}
+
+
+/* =========================================================
+   JUGAR AHORCADO
+   ========================================================= */
+
+function jugarAhorcado(
+    letter,
+    button
+) {
+
+    if (hangmanGameOver) {
+        return;
+    }
+
+
+    button.disabled = true;
+
+
+    hangmanGuessed.push(
+        letter
+    );
+
+
+    if (
+        !hangmanWord.includes(
+            letter
+        )
+    ) {
 
         hangmanAttempts--;
 
     }
 
 
-    if (hangmanWord
-        .split("")
-        .every(letter =>
-            hangmanGuessed.includes(letter)
-        )) {
+    actualizarAhorcado();
 
-        renderHangman();
 
-        document.getElementById(
-            "hangmanMessage"
-        ).textContent =
-            "🎉 ¡Ganaste!";
+    if (
+        hangmanAttempts <= 0 &&
+        !hangmanGameOver
+    ) {
 
-        return;
+        terminarAhorcado(false);
     }
-
-
-    if (hangmanAttempts <= 0) {
-
-        renderHangman();
-
-        document.getElementById(
-            "hangmanMessage"
-        ).textContent =
-            "❌ Perdiste. La palabra era: "
-            + hangmanWord;
-
-        return;
-    }
-
-
-    renderHangman();
-
 }
 
 
 /* =========================================================
-   2. ADIVINA EL NÚMERO
-========================================================= */
+   TERMINAR AHORCADO
+   ========================================================= */
+
+function terminarAhorcado(
+    gano
+) {
+
+    if (hangmanGameOver) {
+        return;
+    }
+
+
+    hangmanGameOver = true;
+
+    detenerCronometro();
+
+
+    const result =
+        document.getElementById(
+            "hangmanResult"
+        );
+
+
+    const buttons =
+        document.querySelectorAll(
+            "#hangmanKeyboard button"
+        );
+
+
+    buttons.forEach(
+        button =>
+            button.disabled = true
+    );
+
+
+    if (gano) {
+
+        registrarVictoria();
+
+        result.className =
+            "result-message win";
+
+        result.textContent =
+            "🎉 ¡GANASTE! Encontraste la palabra: "
+            + hangmanWord;
+
+    } else {
+
+        registrarDerrota();
+
+        result.className =
+            "result-message lose";
+
+        result.textContent =
+            "😢 PERDISTE. La palabra era: "
+            + hangmanWord;
+    }
+}
+
+
+/* =========================================================
+   ADIVINA EL NÚMERO
+   ========================================================= */
 
 let secretNumber = 0;
+
 let numberAttempts = 0;
+
+let numberGameOver = false;
 
 
 function createNumberGame() {
@@ -418,228 +1111,570 @@ function createNumberGame() {
             Math.random() * 100
         ) + 1;
 
+
     numberAttempts = 0;
+
+    numberGameOver = false;
+
 
     gameContent.innerHTML = `
 
-        <div class="game-title">
+        <div class="game-header">
 
-            <h2>🔢 Adivina el número</h2>
+            <div class="emoji">🔢</div>
+
+            <h2>Adivina el número</h2>
 
             <p>
-                El número está entre 1 y 100.
+                El número secreto está entre 1 y 100.
             </p>
 
         </div>
 
-        <div class="number-form">
+
+        <div class="game-info-bar">
+
+            <div class="info-pill">
+                🎯 Intentos:
+                <span id="numberAttempts">0</span>
+            </div>
+
+            <div class="info-pill">
+                ⏱️
+                <span id="numberTime">00:00</span>
+            </div>
+
+        </div>
+
+
+        <div class="number-game">
+
+            <div class="number-hints">
+
+                <div class="hint-box">
+                    🔥 Muy cerca
+                </div>
+
+                <div class="hint-box">
+                    ☀️ Cerca
+                </div>
+
+                <div class="hint-box">
+                    ❄️ Lejos
+                </div>
+
+            </div>
+
 
             <input
-                type="number"
                 id="numberInput"
                 class="number-input"
+                type="number"
                 min="1"
                 max="100"
                 placeholder="Escribe un número"
             >
 
-            <button
-                class="game-button"
-                onclick="checkNumber()"
+
+            <div class="number-buttons">
+
+                <button
+                    class="game-action"
+                    onclick="checkNumber()"
+                >
+                    🔍 Adivinar
+                </button>
+
+                <button
+                    class="game-action secondary"
+                    onclick="createNumberGame()"
+                >
+                    🔄 Reiniciar
+                </button>
+
+            </div>
+
+
+            <div
+                id="numberResult"
+                class="result-message info"
             >
-                Comprobar
-            </button>
+                💡 Pista: comienza a probar números.
+            </div>
 
         </div>
-
-        <p
-            id="numberMessage"
-            class="game-status"
-        ></p>
-
     `;
 
-    setTimeout(function() {
 
-        const input =
-            document.getElementById(
-                "numberInput"
-            );
+    iniciarCronometro(
+        "numberTime"
+    );
 
-        if (input) {
-            input.focus();
-        }
 
-    }, 100);
+    setTimeout(
+        function () {
 
+            const input =
+                document.getElementById(
+                    "numberInput"
+                );
+
+            if (input) {
+                input.focus();
+            }
+
+        },
+        100
+    );
 }
 
 
+/* =========================================================
+   COMPROBAR NUMERO
+   ========================================================= */
+
 function checkNumber() {
+
+    if (numberGameOver) {
+        return;
+    }
+
 
     const input =
         document.getElementById(
             "numberInput"
         );
 
-    const message =
+
+    const result =
         document.getElementById(
-            "numberMessage"
+            "numberResult"
         );
+
+
+    const attemptsElement =
+        document.getElementById(
+            "numberAttempts"
+        );
+
 
     const number =
         Number(input.value);
 
+
     if (
-        !number ||
         number < 1 ||
-        number > 100
+        number > 100 ||
+        !Number.isInteger(number)
     ) {
 
-        message.textContent =
-            "⚠️ Escribe un número entre 1 y 100.";
+        result.className =
+            "result-message lose";
+
+        result.textContent =
+            "⚠️ Escribe un número entero entre 1 y 100.";
 
         return;
     }
+
 
     numberAttempts++;
 
 
-    if (number === secretNumber) {
+    attemptsElement.textContent =
+        numberAttempts;
 
-        message.textContent =
-            "🎉 ¡Correcto! Lo lograste en "
+
+    const difference =
+        Math.abs(
+            secretNumber - number
+        );
+
+
+    if (
+        number === secretNumber
+    ) {
+
+        numberGameOver = true;
+
+        detenerCronometro();
+
+        registrarVictoria();
+
+
+        result.className =
+            "result-message win";
+
+        result.textContent =
+            "🎉 ¡GANASTE! El número era "
+            + secretNumber
+            + ". Lo lograste en "
             + numberAttempts
-            + " intento(s).";
+            + " intentos.";
+
+        input.disabled = true;
 
         return;
     }
 
 
-    if (number < secretNumber) {
+    if (
+        number < secretNumber
+    ) {
 
-        message.textContent =
-            "⬆️ El número secreto es mayor.";
+        if (difference <= 5) {
+
+            result.textContent =
+                "🔥 ¡Muy cerca! El número secreto es MAYOR.";
+
+        } else if (
+            difference <= 15
+        ) {
+
+            result.textContent =
+                "☀️ Vas cerca. El número secreto es MAYOR.";
+
+        } else {
+
+            result.textContent =
+                "❄️ Estás lejos. El número secreto es MAYOR.";
+        }
 
     } else {
 
-        message.textContent =
-            "⬇️ El número secreto es menor.";
+        if (difference <= 5) {
 
+            result.textContent =
+                "🔥 ¡Muy cerca! El número secreto es MENOR.";
+
+        } else if (
+            difference <= 15
+        ) {
+
+            result.textContent =
+                "☀️ Vas cerca. El número secreto es MENOR.";
+
+        } else {
+
+            result.textContent =
+                "❄️ Estás lejos. El número secreto es MENOR.";
+        }
     }
 
+
+    result.className =
+        "result-message info";
+
+
+    input.value = "";
+
+    input.focus();
 }
 
 
 /* =========================================================
-   3. TIC TAC TOE
-========================================================= */
+   ENTER EN NUMERO
+   ========================================================= */
+
+document.addEventListener(
+    "keydown",
+    function (event) {
+
+        if (
+            event.key === "Enter" &&
+            currentGame === "number"
+        ) {
+
+            checkNumber();
+        }
+
+    }
+);
+
+
+/* =========================================================
+   TIC TAC TOE
+   ========================================================= */
 
 let ticBoard = [];
+
 let ticPlayer = "X";
+
 let ticGameOver = false;
+
+let ticMode = null;
+
+let ticXWins = 0;
+
+let ticOWins = 0;
 
 
 function createTicTacToe() {
 
-    ticBoard = [
-        "", "", "",
-        "", "", "",
-        "", "", ""
-    ];
+    ticBoard =
+        Array(9).fill("");
+
 
     ticPlayer = "X";
+
     ticGameOver = false;
 
-    renderTicTacToe();
-
-}
-
-
-function renderTicTacToe() {
-
-    let cells = "";
-
-    ticBoard.forEach(function(cell, index) {
-
-        cells += `
-
-            <button
-                class="tic-cell"
-                onclick="playTic(${index})"
-            >
-                ${cell}
-            </button>
-
-        `;
-
-    });
+    ticMode = null;
 
 
     gameContent.innerHTML = `
 
-        <div class="game-title">
+        <div class="game-header">
 
-            <h2>❌ Tic Tac Toe</h2>
+            <div class="emoji">
+                ❌⭕
+            </div>
+
+            <h2>
+                Tic Tac Toe
+            </h2>
 
             <p>
-                Turno de:
-                <strong>${ticPlayer}</strong>
+                Escoge cómo quieres jugar.
             </p>
 
         </div>
 
-        <div class="tic-board">
-            ${cells}
+
+        <div class="mode-selection">
+
+            <button
+                class="mode-card"
+                onclick="startTicMode('computer')"
+            >
+
+                <div style="font-size:45px">
+                    🤖
+                </div>
+
+                <h3>
+                    1 jugador
+                </h3>
+
+                <p>
+                    Juega contra la computadora.
+                </p>
+
+            </button>
+
+
+            <button
+                class="mode-card"
+                onclick="startTicMode('two')"
+            >
+
+                <div style="font-size:45px">
+                    👩‍🤝‍👩
+                </div>
+
+                <h3>
+                    2 jugadores
+                </h3>
+
+                <p>
+                    Dos personas en el mismo portátil.
+                </p>
+
+            </button>
+
         </div>
 
-        <p
-            id="ticMessage"
-            class="game-status"
-        ></p>
+
+        <div
+            id="ticGameArea"
+            class="hidden"
+        ></div>
 
     `;
-
 }
 
+
+/* =========================================================
+   INICIAR TIC TAC TOE
+   ========================================================= */
+
+function startTicMode(mode) {
+
+    ticMode = mode;
+
+    ticBoard =
+        Array(9).fill("");
+
+    ticPlayer = "X";
+
+    ticGameOver = false;
+
+
+    renderTicTacToe();
+}
+
+
+/* =========================================================
+   RENDER TIC TAC TOE
+   ========================================================= */
+
+function renderTicTacToe() {
+
+    const area =
+        document.getElementById(
+            "ticGameArea"
+        );
+
+
+    area.classList.remove(
+        "hidden"
+    );
+
+
+    area.innerHTML = `
+
+        <div class="game-info-bar">
+
+            <div class="info-pill">
+                ${ticMode === "computer"
+                    ? "🤖 Tú vs Computadora"
+                    : "👩‍🤝‍👩 Dos jugadores"
+                }
+            </div>
+
+            <div class="info-pill">
+                Turno:
+                ${ticPlayer}
+            </div>
+
+        </div>
+
+
+        <div class="tic-score">
+
+            <div class="info-pill">
+                ❌ Victorias:
+                ${ticXWins}
+            </div>
+
+            <div class="info-pill">
+                ⭕ Victorias:
+                ${ticOWins}
+            </div>
+
+        </div>
+
+
+        <div
+            id="ticBoard"
+            class="tic-board"
+        ></div>
+
+
+        <div
+            id="ticResult"
+            class="result-message info"
+        >
+            🎮 Turno de ${ticPlayer}
+        </div>
+
+
+        <div
+            style="
+                text-align:center;
+                margin-top:15px;
+            "
+        >
+
+            <button
+                class="game-action"
+                onclick="startTicMode('${ticMode}')"
+            >
+                🔄 Nueva partida
+            </button>
+
+        </div>
+    `;
+
+
+    const boardElement =
+        document.getElementById(
+            "ticBoard"
+        );
+
+
+    ticBoard.forEach(
+        function (value, index) {
+
+            const cell =
+                document.createElement(
+                    "button"
+                );
+
+
+            cell.className =
+                "tic-cell";
+
+            cell.textContent =
+                value;
+
+
+            cell.addEventListener(
+                "click",
+                function () {
+
+                    playTic(index);
+
+                }
+            );
+
+
+            boardElement.appendChild(
+                cell
+            );
+        }
+    );
+}
+
+
+/* =========================================================
+   JUGAR TIC
+   ========================================================= */
 
 function playTic(index) {
 
     if (
-        ticBoard[index] !== "" ||
-        ticGameOver
+        ticGameOver ||
+        ticBoard[index] !== ""
     ) {
-        return;
-    }
-
-    ticBoard[index] = ticPlayer;
-
-
-    if (checkTicWinner()) {
-
-        ticGameOver = true;
-
-        renderTicTacToe();
-
-        document.getElementById(
-            "ticMessage"
-        ).textContent =
-            "🎉 ¡Ganó " + ticPlayer + "!";
 
         return;
     }
 
 
-    if (!ticBoard.includes("")) {
+    ticBoard[index] =
+        ticPlayer;
 
-        ticGameOver = true;
 
-        renderTicTacToe();
+    if (
+        checkTicWinner()
+    ) {
 
-        document.getElementById(
-            "ticMessage"
-        ).textContent =
-            "🤝 ¡Empate!";
+        terminarTic(
+            ticPlayer
+        );
+
+        return;
+    }
+
+
+    if (
+        ticBoard.every(
+            cell => cell !== ""
+        )
+    ) {
+
+        terminarTic("draw");
 
         return;
     }
@@ -650,128 +1685,369 @@ function playTic(index) {
             ? "O"
             : "X";
 
+
     renderTicTacToe();
 
+
+    /*
+     * Si es contra computadora y ahora
+     * le toca a O, la computadora juega.
+     */
+
+    if (
+        ticMode === "computer" &&
+        ticPlayer === "O"
+    ) {
+
+        setTimeout(
+            computerTicMove,
+            500
+        );
+    }
 }
 
+
+/* =========================================================
+   COMPUTADORA
+   ========================================================= */
+
+function computerTicMove() {
+
+    if (ticGameOver) {
+        return;
+    }
+
+
+    const empty =
+        ticBoard
+            .map(
+                (value, index) =>
+                    value === ""
+                        ? index
+                        : null
+            )
+            .filter(
+                index => index !== null
+            );
+
+
+    if (empty.length === 0) {
+        return;
+    }
+
+
+    /*
+     * Primero intenta ganar.
+     */
+
+    for (
+        const index of empty
+    ) {
+
+        ticBoard[index] = "O";
+
+
+        if (
+            checkTicWinner()
+        ) {
+
+            ticPlayer = "O";
+
+            terminarTic("O");
+
+            return;
+
+        }
+
+
+        ticBoard[index] = "";
+    }
+
+
+    /*
+     * Después intenta bloquear a X.
+     */
+
+    for (
+        const index of empty
+    ) {
+
+        ticBoard[index] = "X";
+
+
+        if (
+            checkTicWinner()
+        ) {
+
+            ticBoard[index] = "O";
+
+            ticPlayer = "O";
+
+            renderTicTacToe();
+
+            return;
+        }
+
+
+        ticBoard[index] = "";
+    }
+
+
+    /*
+     * Si no hay jugada especial,
+     * elige una posición aleatoria.
+     */
+
+    const randomIndex =
+        empty[
+            Math.floor(
+                Math.random() *
+                empty.length
+            )
+        ];
+
+
+    ticBoard[randomIndex] =
+        "O";
+
+
+    if (
+        checkTicWinner()
+    ) {
+
+        ticPlayer = "O";
+
+        terminarTic("O");
+
+        return;
+    }
+
+
+    if (
+        ticBoard.every(
+            cell => cell !== ""
+        )
+    ) {
+
+        terminarTic("draw");
+
+        return;
+    }
+
+
+    ticPlayer = "X";
+
+    renderTicTacToe();
+}
+
+
+/* =========================================================
+   GANADOR TIC
+   ========================================================= */
 
 function checkTicWinner() {
 
     const combinations = [
 
         [0, 1, 2],
+
         [3, 4, 5],
+
         [6, 7, 8],
 
         [0, 3, 6],
+
         [1, 4, 7],
+
         [2, 5, 8],
 
         [0, 4, 8],
+
         [2, 4, 6]
 
     ];
 
 
     return combinations.some(
-        function(combo) {
+        function (combination) {
 
             const [a, b, c] =
-                combo;
+                combination;
+
 
             return (
                 ticBoard[a] !== "" &&
-                ticBoard[a] === ticBoard[b] &&
-                ticBoard[a] === ticBoard[c]
+                ticBoard[a] ===
+                    ticBoard[b] &&
+                ticBoard[a] ===
+                    ticBoard[c]
             );
-
         }
     );
-
 }
 
 
 /* =========================================================
-   4. JUEGO DE MEMORIA
-========================================================= */
+   TERMINAR TIC
+   ========================================================= */
+
+function terminarTic(result) {
+
+    ticGameOver = true;
+
+
+    const area =
+        document.getElementById(
+            "ticGameArea"
+        );
+
+
+    if (!area) {
+        return;
+    }
+
+
+    let message = "";
+
+    let className =
+        "result-message info";
+
+
+    if (result === "draw") {
+
+        message =
+            "🤝 ¡Empate! Nadie ganó esta partida.";
+
+    } else if (
+        result === "X"
+    ) {
+
+        ticXWins++;
+
+        registrarVictoria();
+
+        message =
+            "🎉 ¡GANÓ X! ¡Muy buena jugada!";
+
+        className =
+            "result-message win";
+
+    } else {
+
+        ticOWins++;
+
+
+        if (
+            ticMode === "computer"
+        ) {
+
+            registrarDerrota();
+
+            message =
+                "🤖 La computadora ganó esta vez.";
+
+            className =
+                "result-message lose";
+
+        } else {
+
+            registrarVictoria();
+
+            message =
+                "🎉 ¡GANÓ O! ¡Muy buena partida!";
+
+            className =
+                "result-message win";
+        }
+    }
+
+
+    renderTicTacToe();
+
+
+    const resultElement =
+        document.getElementById(
+            "ticResult"
+        );
+
+
+    if (resultElement) {
+
+        resultElement.className =
+            className;
+
+        resultElement.textContent =
+            message;
+    }
+}
+
+
+/* =========================================================
+   MEMORIA
+   ========================================================= */
 
 let memoryCards = [];
+
 let memoryFlipped = [];
+
 let memoryMatched = [];
-let memoryLock = false;
+
+let memoryLocked = false;
+
+let memoryMoves = 0;
+
+let memoryGameOver = false;
+
+
+const memoryAnimals = [
+
+    "🐼",
+    "🦊",
+    "🐸",
+    "🐨",
+    "🐰",
+    "🐯",
+    "🐵",
+    "🦄"
+
+];
 
 
 function createMemoryGame() {
 
-    const values = [
-        "🍎",
-        "🍎",
-        "🍕",
-        "🍕",
-        "🚗",
-        "🚗",
-        "⚽",
-        "⚽",
-        "🎵",
-        "🎵",
-        "🐱",
-        "🐱",
-        "🌟",
-        "🌟",
-        "🎮",
-        "🎮"
-    ];
-
-
     memoryCards =
-        values.sort(
-            () => Math.random() - 0.5
-        );
+        [...memoryAnimals,
+         ...memoryAnimals];
+
+
+    memoryCards.sort(
+        () =>
+            Math.random() - 0.5
+    );
+
 
     memoryFlipped = [];
+
     memoryMatched = [];
-    memoryLock = false;
 
-    renderMemory();
+    memoryLocked = false;
 
-}
+    memoryMoves = 0;
 
-
-function renderMemory() {
-
-    let cards = "";
-
-    memoryCards.forEach(
-        function(card, index) {
-
-            const visible =
-                memoryFlipped.includes(index) ||
-                memoryMatched.includes(index);
-
-            cards += `
-
-                <button
-                    class="memory-card-game
-                    ${visible ? "flipped" : ""}
-                    ${memoryMatched.includes(index)
-                        ? "matched"
-                        : ""}"
-                    onclick="flipMemory(${index})"
-                >
-                    ${visible ? card : "?"}
-                </button>
-
-            `;
-
-        }
-    );
+    memoryGameOver = false;
 
 
     gameContent.innerHTML = `
 
-        <div class="game-title">
+        <div class="game-header">
 
-            <h2>🧠 Memoria</h2>
+            <div class="emoji">
+                🧠
+            </div>
+
+            <h2>
+                Memoria de Animalitos
+            </h2>
 
             <p>
                 Encuentra todas las parejas.
@@ -779,111 +2055,409 @@ function renderMemory() {
 
         </div>
 
-        <div class="memory-board">
-            ${cards}
+
+        <div class="game-info-bar">
+
+            <div class="info-pill">
+                🎯 Movimientos:
+                <span id="memoryMoves">
+                    0
+                </span>
+            </div>
+
+            <div class="info-pill">
+                💜 Parejas:
+                <span id="memoryPairs">
+                    0
+                </span>/8
+            </div>
+
+            <div class="info-pill">
+                ⏱️
+                <span id="memoryTime">
+                    00:00
+                </span>
+            </div>
+
         </div>
 
-        <p
-            id="memoryMessage"
-            class="game-status"
+
+        <div
+            id="memoryBoard"
+            class="memory-board"
+        ></div>
+
+
+        <div
+            id="memoryResult"
+            class="result-message info"
         >
-            Parejas encontradas:
-            ${memoryMatched.length / 2}
-        </p>
+            🧠 ¡Busca las parejas!
+        </div>
+
+
+        <div
+            style="text-align:center"
+        >
+
+            <button
+                class="game-action"
+                onclick="createMemoryGame()"
+            >
+                🔄 Reiniciar
+            </button>
+
+        </div>
 
     `;
 
+
+    renderMemory();
+
+
+    iniciarCronometro(
+        "memoryTime"
+    );
 }
 
+
+/* =========================================================
+   RENDER MEMORIA
+   ========================================================= */
+
+function renderMemory() {
+
+    const board =
+        document.getElementById(
+            "memoryBoard"
+        );
+
+
+    board.innerHTML = "";
+
+
+    memoryCards.forEach(
+        function (animal, index) {
+
+            const card =
+                document.createElement(
+                    "button"
+                );
+
+
+            card.className =
+                "memory-card-game";
+
+
+            if (
+                memoryFlipped.includes(
+                    index
+                ) ||
+                memoryMatched.includes(
+                    index
+                )
+            ) {
+
+                card.classList.add(
+                    "flipped"
+                );
+
+                card.textContent =
+                    animal;
+
+            } else {
+
+                card.textContent =
+                    "❓";
+            }
+
+
+            if (
+                memoryMatched.includes(
+                    index
+                )
+            ) {
+
+                card.classList.add(
+                    "matched"
+                );
+            }
+
+
+            card.addEventListener(
+                "click",
+                function () {
+
+                    flipMemory(
+                        index
+                    );
+
+                }
+            );
+
+
+            board.appendChild(
+                card
+            );
+        }
+    );
+
+
+    document.getElementById(
+        "memoryMoves"
+    ).textContent =
+        memoryMoves;
+
+
+    document.getElementById(
+        "memoryPairs"
+    ).textContent =
+        memoryMatched.length / 2;
+}
+
+
+/* =========================================================
+   VOLTEAR CARTA
+   ========================================================= */
 
 function flipMemory(index) {
 
     if (
-        memoryLock ||
+        memoryLocked ||
+        memoryGameOver ||
         memoryFlipped.includes(index) ||
         memoryMatched.includes(index)
     ) {
+
         return;
     }
+
 
     memoryFlipped.push(index);
 
     renderMemory();
 
 
-    if (memoryFlipped.length !== 2) {
-        return;
-    }
-
-    memoryLock = true;
-
-    const first =
-        memoryFlipped[0];
-
-    const second =
-        memoryFlipped[1];
-
-
     if (
-        memoryCards[first] ===
-        memoryCards[second]
+        memoryFlipped.length === 2
     ) {
 
-        memoryMatched.push(
-            first,
-            second
-        );
+        memoryMoves++;
 
-        memoryFlipped = [];
-        memoryLock = false;
+        memoryLocked = true;
 
-        renderMemory();
+
+        const first =
+            memoryFlipped[0];
+
+        const second =
+            memoryFlipped[1];
+
 
         if (
-            memoryMatched.length ===
-            memoryCards.length
+            memoryCards[first] ===
+            memoryCards[second]
         ) {
 
-            document.getElementById(
-                "memoryMessage"
-            ).textContent =
-                "🎉 ¡Completaste el juego!";
+            memoryMatched.push(
+                first,
+                second
+            );
 
-        }
-
-    } else {
-
-        setTimeout(function() {
 
             memoryFlipped = [];
-            memoryLock = false;
+
+            memoryLocked = false;
+
 
             renderMemory();
 
-        }, 800);
 
+            if (
+                memoryMatched.length ===
+                memoryCards.length
+            ) {
+
+                terminarMemoria();
+            }
+
+        } else {
+
+            setTimeout(
+                function () {
+
+                    memoryFlipped = [];
+
+                    memoryLocked = false;
+
+                    renderMemory();
+
+                },
+                800
+            );
+        }
     }
-
 }
 
 
 /* =========================================================
-   5. BUSCAMINAS
-========================================================= */
+   TERMINAR MEMORIA
+   ========================================================= */
 
-let mineBoard = [];
-let mineGameOver = false;
+function terminarMemoria() {
+
+    memoryGameOver = true;
+
+    detenerCronometro();
+
+    registrarVictoria();
+
+
+    const result =
+        document.getElementById(
+            "memoryResult"
+        );
+
+
+    result.className =
+        "result-message win";
+
+    result.textContent =
+        "🎉 ¡GANASTE! Encontraste todas las parejas en "
+        + memoryMoves
+        + " movimientos.";
+}
+
+
+/* =========================================================
+   BUSCAMINAS
+   ========================================================= */
 
 const mineRows = 8;
+
 const mineCols = 8;
+
 const mineCount = 10;
+
+let mineBoard = [];
+
+let mineGameOver = false;
+
+let mineRevealed = 0;
+
+let mineFlags = 0;
 
 
 function createMinesweeper() {
 
     mineGameOver = false;
 
-    mineBoard = [];
+    mineRevealed = 0;
+
+    mineFlags = 0;
+
+
+    mineBoard =
+        crearTableroMinas();
+
+
+    colocarMinas();
+
+
+    calcularNumerosMinas();
+
+
+    gameContent.innerHTML = `
+
+        <div class="game-header">
+
+            <div class="emoji">
+                💣
+            </div>
+
+            <h2>
+                Buscaminas
+            </h2>
+
+            <p>
+                Encuentra las casillas seguras.
+                ¡Cuidado con las minas!
+            </p>
+
+        </div>
+
+
+        <div class="game-info-bar">
+
+            <div class="info-pill">
+                💣 Minas:
+                ${mineCount}
+            </div>
+
+            <div class="info-pill">
+                🚩 Banderas:
+                <span id="mineFlags">
+                    0
+                </span>
+            </div>
+
+            <div class="info-pill">
+                ⏱️
+                <span id="mineTime">
+                    00:00
+                </span>
+            </div>
+
+        </div>
+
+
+        <div
+            id="mineBoard"
+            class="mine-board"
+        ></div>
+
+
+        <div
+            id="mineResult"
+            class="result-message info"
+        >
+            💡 Consejo: haz clic derecho para poner una bandera.
+        </div>
+
+
+        <div
+            style="text-align:center"
+        >
+
+            <button
+                class="game-action"
+                onclick="createMinesweeper()"
+            >
+                🔄 Nuevo tablero
+            </button>
+
+        </div>
+
+    `;
+
+
+    renderMinesweeper();
+
+
+    iniciarCronometro(
+        "mineTime"
+    );
+}
+
+
+/* =========================================================
+   CREAR TABLERO
+   ========================================================= */
+
+function crearTableroMinas() {
+
+    const board = [];
+
 
     for (
         let row = 0;
@@ -891,7 +2465,8 @@ function createMinesweeper() {
         row++
     ) {
 
-        mineBoard[row] = [];
+        board[row] = [];
+
 
         for (
             let col = 0;
@@ -899,44 +2474,69 @@ function createMinesweeper() {
             col++
         ) {
 
-            mineBoard[row][col] = {
+            board[row][col] = {
 
                 mine: false,
+
+                number: 0,
+
                 revealed: false,
-                flagged: false,
-                number: 0
 
+                flagged: false
             };
-
         }
-
     }
 
+
+    return board;
+}
+
+
+/* =========================================================
+   COLOCAR MINAS
+   ========================================================= */
+
+function colocarMinas() {
 
     let placed = 0;
 
-    while (placed < mineCount) {
+
+    while (
+        placed < mineCount
+    ) {
 
         const row =
             Math.floor(
-                Math.random() * mineRows
+                Math.random() *
+                mineRows
             );
+
 
         const col =
             Math.floor(
-                Math.random() * mineCols
+                Math.random() *
+                mineCols
             );
 
-        if (!mineBoard[row][col].mine) {
 
-            mineBoard[row][col].mine = true;
+        if (
+            !mineBoard[row][col].mine
+        ) {
+
+            mineBoard[row][col].mine =
+                true;
 
             placed++;
-
         }
-
     }
+}
 
+
+/* =========================================================
+   CALCULAR NUMEROS
+   ========================================================= */
+
+function calcularNumerosMinas() {
 
     for (
         let row = 0;
@@ -956,7 +2556,9 @@ function createMinesweeper() {
                 continue;
             }
 
+
             let count = 0;
+
 
             for (
                 let dr = -1;
@@ -970,8 +2572,20 @@ function createMinesweeper() {
                     dc++
                 ) {
 
-                    const nr = row + dr;
-                    const nc = col + dc;
+                    if (
+                        dr === 0 &&
+                        dc === 0
+                    ) {
+                        continue;
+                    }
+
+
+                    const nr =
+                        row + dr;
+
+                    const nc =
+                        col + dc;
+
 
                     if (
                         nr >= 0 &&
@@ -982,29 +2596,32 @@ function createMinesweeper() {
                     ) {
 
                         count++;
-
                     }
-
                 }
-
             }
+
 
             mineBoard[row][col].number =
                 count;
-
         }
-
     }
-
-
-    renderMinesweeper();
-
 }
 
 
+/* =========================================================
+   RENDER BUSCAMINAS
+   ========================================================= */
+
 function renderMinesweeper() {
 
-    let cells = "";
+    const board =
+        document.getElementById(
+            "mineBoard"
+        );
+
+
+    board.innerHTML = "";
+
 
     for (
         let row = 0;
@@ -1021,89 +2638,124 @@ function renderMinesweeper() {
             const cell =
                 mineBoard[row][col];
 
-            let content = "";
 
-            if (cell.flagged) {
+            const button =
+                document.createElement(
+                    "button"
+                );
 
-                content = "🚩";
 
-            } else if (cell.revealed) {
+            button.className =
+                "mine-cell";
+
+
+            if (cell.revealed) {
+
+                button.classList.add(
+                    "revealed"
+                );
+
 
                 if (cell.mine) {
 
-                    content = "💣";
+                    button.classList.add(
+                        "mine"
+                    );
+
+                    button.textContent =
+                        "💣";
+
+                } else if (
+                    cell.number > 0
+                ) {
+
+                    button.textContent =
+                        cell.number;
 
                 } else {
 
-                    content =
-                        cell.number === 0
-                            ? ""
-                            : cell.number;
-
+                    button.textContent =
+                        "✨";
                 }
 
+            } else if (
+                cell.flagged
+            ) {
+
+                button.classList.add(
+                    "flagged"
+                );
+
+                button.textContent =
+                    "🚩";
+
+            } else {
+
+                button.textContent =
+                    "❔";
             }
 
 
-            cells += `
+            button.addEventListener(
+                "click",
+                function () {
 
-                <button
-                    class="
-                        mine-cell
-                        ${cell.revealed ? "revealed" : ""}
-                        ${cell.flagged ? "flagged" : ""}
-                    "
-                    onclick="revealMine(${row},${col})"
-                    oncontextmenu="flagMine(event,${row},${col})"
-                >
-                    ${content}
-                </button>
+                    revealMine(
+                        row,
+                        col
+                    );
 
-            `;
+                }
+            );
 
+
+            button.addEventListener(
+                "contextmenu",
+                function (event) {
+
+                    event.preventDefault();
+
+                    flagMine(
+                        row,
+                        col
+                    );
+
+                }
+            );
+
+
+            board.appendChild(
+                button
+            );
         }
-
     }
 
 
-    gameContent.innerHTML = `
+    const flagElement =
+        document.getElementById(
+            "mineFlags"
+        );
 
-        <div class="game-title">
 
-            <h2>💣 Buscaminas</h2>
+    if (flagElement) {
 
-            <p>
-                Clic para descubrir.
-                Clic derecho para poner bandera.
-            </p>
-
-        </div>
-
-        <div class="mines-board">
-            ${cells}
-        </div>
-
-        <p
-            id="mineMessage"
-            class="game-status"
-        >
-            🚩 Banderas:
-            ${mineBoard.flat()
-                .filter(cell => cell.flagged)
-                .length}
-        </p>
-
-    `;
-
+        flagElement.textContent =
+            mineFlags;
+    }
 }
 
 
-function revealMine(row, col) {
+/* =========================================================
+   REVELAR MINA
+   ========================================================= */
+
+function revealMine(
+    row,
+    col
+) {
 
     if (
-        mineGameOver ||
-        mineBoard[row][col].revealed ||
-        mineBoard[row][col].flagged
+        mineGameOver
     ) {
         return;
     }
@@ -1112,287 +2764,293 @@ function revealMine(row, col) {
     const cell =
         mineBoard[row][col];
 
+
+    if (
+        cell.flagged ||
+        cell.revealed
+    ) {
+        return;
+    }
+
+
     cell.revealed = true;
 
 
     if (cell.mine) {
 
-        mineGameOver = true;
-
-        mineBoard.flat().forEach(
-            function(item) {
-
-                if (item.mine) {
-                    item.revealed = true;
-                }
-
-            }
-        );
-
-        renderMinesweeper();
-
-        document.getElementById(
-            "mineMessage"
-        ).textContent =
-            "💥 ¡Pisaste una mina!";
+        terminarMinas(false);
 
         return;
     }
 
 
-    if (cell.number === 0) {
-
-        revealEmptyCells(row, col);
-
-    }
+    mineRevealed++;
 
 
-    renderMinesweeper();
+    /*
+     * Si no hay números alrededor,
+     * se abren las casillas vecinas.
+     */
 
-
-    if (checkMineWin()) {
-
-        mineGameOver = true;
-
-        document.getElementById(
-            "mineMessage"
-        ).textContent =
-            "🎉 ¡Ganaste Buscaminas!";
-
-    }
-
-}
-
-
-function revealEmptyCells(row, col) {
-
-    for (
-        let dr = -1;
-        dr <= 1;
-        dr++
+    if (
+        cell.number === 0
     ) {
 
         for (
-            let dc = -1;
-            dc <= 1;
-            dc++
+            let dr = -1;
+            dr <= 1;
+            dr++
         ) {
 
-            const nr = row + dr;
-            const nc = col + dc;
-
-
-            if (
-                nr < 0 ||
-                nr >= mineRows ||
-                nc < 0 ||
-                nc >= mineCols
+            for (
+                let dc = -1;
+                dc <= 1;
+                dc++
             ) {
-                continue;
+
+                const nr =
+                    row + dr;
+
+                const nc =
+                    col + dc;
+
+
+                if (
+                    nr >= 0 &&
+                    nr < mineRows &&
+                    nc >= 0 &&
+                    nc < mineCols
+                ) {
+
+                    if (
+                        !mineBoard[nr][nc]
+                            .revealed &&
+                        !mineBoard[nr][nc]
+                            .mine
+                    ) {
+
+                        revealMine(
+                            nr,
+                            nc
+                        );
+                    }
+                }
             }
-
-
-            const cell =
-                mineBoard[nr][nc];
-
-
-            if (
-                cell.revealed ||
-                cell.mine ||
-                cell.flagged
-            ) {
-                continue;
-            }
-
-
-            cell.revealed = true;
-
-
-            if (cell.number === 0) {
-
-                revealEmptyCells(
-                    nr,
-                    nc
-                );
-
-            }
-
         }
-
     }
 
-}
-
-
-function flagMine(event, row, col) {
-
-    event.preventDefault();
-
-    if (
-        mineGameOver ||
-        mineBoard[row][col].revealed
-    ) {
-        return false;
-    }
-
-    mineBoard[row][col].flagged =
-        !mineBoard[row][col].flagged;
 
     renderMinesweeper();
 
-    return false;
 
+    checkMineWin();
 }
 
 
+/* =========================================================
+   BANDERA
+   ========================================================= */
+
+function flagMine(
+    row,
+    col
+) {
+
+    if (
+        mineGameOver
+    ) {
+        return;
+    }
+
+
+    const cell =
+        mineBoard[row][col];
+
+
+    if (cell.revealed) {
+        return;
+    }
+
+
+    if (cell.flagged) {
+
+        cell.flagged = false;
+
+        mineFlags--;
+
+    } else {
+
+        if (
+            mineFlags >= mineCount
+        ) {
+            return;
+        }
+
+
+        cell.flagged = true;
+
+        mineFlags++;
+    }
+
+
+    renderMinesweeper();
+}
+
+
+/* =========================================================
+   COMPROBAR VICTORIA MINAS
+   ========================================================= */
+
 function checkMineWin() {
 
-    let safeCells = 0;
+    const safeCells =
+        mineRows *
+        mineCols -
+        mineCount;
 
-    mineBoard.flat().forEach(
-        function(cell) {
 
-            if (
-                !cell.mine &&
-                cell.revealed
-            ) {
+    if (
+        mineRevealed >=
+        safeCells
+    ) {
 
-                safeCells++;
+        terminarMinas(true);
+    }
+}
 
-            }
+
+/* =========================================================
+   TERMINAR BUSCAMINAS
+   ========================================================= */
+
+function terminarMinas(
+    gano
+) {
+
+    if (mineGameOver) {
+        return;
+    }
+
+
+    mineGameOver = true;
+
+    detenerCronometro();
+
+
+    if (gano) {
+
+        registrarVictoria();
+
+
+        const result =
+            document.getElementById(
+                "mineResult"
+            );
+
+
+        result.className =
+            "result-message win";
+
+        result.textContent =
+            "🎉 ¡GANASTE! Encontraste todas las casillas seguras.";
+
+    } else {
+
+        registrarDerrota();
+
+
+        mineBoard.forEach(
+            row =>
+                row.forEach(
+                    cell => {
+
+                        if (
+                            cell.mine
+                        ) {
+
+                            cell.revealed =
+                                true;
+                        }
+
+                    }
+                )
+        );
+
+
+        renderMinesweeper();
+
+
+        const result =
+            document.getElementById(
+                "mineResult"
+            );
+
+
+        result.className =
+            "result-message lose";
+
+        result.textContent =
+            "💥 ¡BOOM! Encontraste una mina. ¡Inténtalo otra vez!";
+    }
+}
+
+
+/* =========================================================
+   AYUDA
+   ========================================================= */
+
+document
+    .getElementById("helpButton")
+    .addEventListener(
+        "click",
+        function () {
+
+            helpModal.classList.remove(
+                "hidden"
+            );
 
         }
     );
 
 
-    return safeCells ===
-        mineRows * mineCols - mineCount;
+function closeHelp() {
 
+    helpModal.classList.add(
+        "hidden"
+    );
 }
 
 
 /* =========================================================
-   ATAJOS DE TECLADO
-========================================================= */
+   TECLA ESC
+   ========================================================= */
 
 document.addEventListener(
     "keydown",
-    function(event) {
-
-        const key =
-            event.key.toLowerCase();
-
-        const modalOpen =
-            !gameModal.classList.contains(
-                "hidden"
-            );
-
-
-        /* ESC = cerrar juego */
+    function (event) {
 
         if (
-            event.key === "Escape" &&
-            modalOpen
+            event.key === "Escape"
         ) {
 
-            closeGame();
+            if (
+                !gameModal.classList.contains(
+                    "hidden"
+                )
+            ) {
 
-            return;
-        }
-
-
-        /* R = reiniciar */
-
-        if (
-            key === "r" &&
-            modalOpen
-        ) {
-
-            event.preventDefault();
-
-            if (currentGame === "hangman") {
-                createHangman();
+                closeGame();
             }
 
-            if (currentGame === "number") {
-                createNumberGame();
+
+            if (
+                !helpModal.classList.contains(
+                    "hidden"
+                )
+            ) {
+
+                closeHelp();
             }
-
-            if (currentGame === "tic") {
-                createTicTacToe();
-            }
-
-            if (currentGame === "memory") {
-                createMemoryGame();
-            }
-
-            if (currentGame === "mines") {
-                createMinesweeper();
-            }
-
-            return;
-        }
-
-
-        /* No ejecutar navegación mientras se escribe */
-
-        const active =
-            document.activeElement;
-
-        const typing =
-            active &&
-            (
-                active.tagName === "INPUT" ||
-                active.tagName === "TEXTAREA"
-            );
-
-
-        if (
-            typing ||
-            modalOpen
-        ) {
-            return;
-        }
-
-
-        /* G = juegos */
-
-        if (key === "g") {
-
-            showSection("home");
-
-            setTimeout(
-                scrollToGames,
-                100
-            );
-
-        }
-
-
-        /* A = acerca de */
-
-        if (key === "a") {
-
-            showSection("about");
-
-        }
-
-
-        /* H = inicio */
-
-        if (key === "h") {
-
-            showSection("home");
-
-        }
-
-
-        /* HOME = inicio */
-
-        if (event.key === "Home") {
-
-            showSection("home");
-
         }
 
     }
@@ -1400,198 +3058,15 @@ document.addEventListener(
 
 
 /* =========================================================
-   ENTER PARA ADIVINA EL NÚMERO
-========================================================= */
+   EVITAR CLIC DERECHO GENERAL EN JUEGO
+   ========================================================= */
 
-document.addEventListener(
-    "keydown",
-    function(event) {
-
-        if (
-            event.key === "Enter" &&
-            currentGame === "number"
-        ) {
-
-            const input =
-                document.getElementById(
-                    "numberInput"
-                );
-
-            if (
-                input &&
-                document.activeElement === input
-            ) {
-
-                checkNumber();
-
-            }
-
-        }
-
-    }
-);
+/*
+ * No bloqueamos el clic derecho porque Buscaminas
+ * lo necesita para colocar banderas.
+ */
 
 
-
-
-
-document.addEventListener("DOMContentLoaded", function() {
-    
-    // CONTROL DE VENTANAS Y PERFILES
-    const ventanaEdad = document.getElementById("ventana-edad");
-    const interfazPlataforma = document.getElementById("interfaz-plataforma");
-    const btnNinos = document.getElementById("modo-ninos");
-    const btnJovenes = document.getElementById("modo-jovenes");
-    const btnCambiarModo = document.getElementById("btn-cambiar-modo");
-
-    // LABELS DINÁMICOS POR EDAD
-    const tituloBienvenida = document.getElementById("titulo-bienvenida");
-    const subBienvenida = document.getElementById("sub-bienvenida");
-    const descKids = document.querySelectorAll(".desc-kids");
-    const descTeens = document.querySelectorAll(".desc-teens");
-
-    // NAVEGACIÓN MECÁNICA POR TABS
-    const tabLinks = document.querySelectorAll(".tab-link:not(.cambio-edad)");
-    const vistasSeccion = document.querySelectorAll(".vista-seccion");
-
-    // MODAL INTERNO AHORCADO
-    const ventanaModalAhorcado = document.getElementById("ventana-modal-ahorcado");
-    const btnJugarAhorcado = document.getElementById("btn-jugar-ahorcado");
-    const btnCerrarAhorcado = document.getElementById("btn-cerrar-ahorcado-modal");
-    const btnReiniciarAhorcadoRapido = document.getElementById("btn-reiniciar-ahorcado-rapido");
-    const contenedorPalabraSecreta = document.getElementById("contenedor-palabra-secreta");
-    const marcadorIntentosAhorcado = document.getElementById("marcador-intentos-ahorcado");
-    const letrasTecladoVirtual = document.getElementById("letras-teclado-virtual");
-    const mensajeResultadoAhorcado = document.getElementById("mensaje-resultado-ahorcado");
-
-    // LÓGICA DEL JUEGO AHORCADO
-    const bancoPalabras = ["SENA", "CODIGO", "COMPUTADORA", "INTERNET", "TECLADO", "PANTALLA", "JUEGO", "HTML"];
-    let palabraOculta = "";
-    let letrasAdivinadas = [];
-    let intentosRestantes = 6;
-
-    // ASIGNAR ENTORNO/MODO DE EDAD
-    function seleccionarModo(modo) {
-        ventanaEdad.classList.add("oculto");
-        interfazPlataforma.classList.remove("oculto");
-        document.body.className = ""; // Limpia clases previas
-        
-        if (modo === "ninos") {
-            document.body.classList.add("entorno-ninos");
-            tituloBienvenida.textContent = "✨ ¡Bienvenidos a la Zona de Juegos! ✨";
-            subBienvenida.textContent = "Elige el juego que más te guste y diviértete aprendiendo.";
-            descKids.forEach(el => el.classList.remove("oculto"));
-            descTeens.forEach(el => el.classList.add("oculto"));
-        } else {
-            document.body.classList.add("entorno-jovenes");
-            tituloBienvenida.textContent = "🚀 Panel de Control Gamer - Code Power";
-            subBienvenida.textContent = "Optimiza tus habilidades técnicas y algorítmicas en nuestro entorno interactivo.";
-            descKids.forEach(el => el.classList.add("oculto"));
-            descTeens.forEach(el => el.classList.remove("oculto"));
-        }
-    }
-
-    btnNinos.addEventListener("click", () => seleccionarModo("ninos"));
-    btnJovenes.addEventListener("click", () => seleccionarModo("jovenes"));
-    
-    btnCambiarModo.addEventListener("click", () => {
-        interfazPlataforma.classList.add("oculto");
-        ventanaEdad.classList.remove("oculto");
-    });
-
-    // SISTEMA MECÁNICO DE CAMBIO DE VENTANAS (TABS)
-    tabLinks.forEach(tab => {
-        tab.addEventListener("click", function() {
-            tabLinks.forEach(t => t.classList.remove("activo"));
-            this.classList.add("activo");
-
-            const seccionDestino = this.getAttribute("data-target");
-            vistasSeccion.forEach(vista => {
-                if (vista.id === seccionDestino) {
-                    vista.classList.remove("oculto");
-                } else {
-                    vista.classList.add("oculto");
-                }
-            });
-        });
-    });
-
-    // MECÁNICA DEL JUEGO: AHORCADO
-    function iniciarAhorcado() {
-        palabraOculta = bancoPalabras[Math.floor(Math.random() * bancoPalabras.length)];
-        letrasAdivinadas = [];
-        intentosRestantes = 6;
-        mensajeResultadoAhorcado.textContent = "";
-        mensajeResultadoAhorcado.style.color = "inherit";
-        marcadorIntentosAhorcado.textContent = intentosRestantes;
-
-        actualizarVisualizacionPalabra();
-        construirTecladoVirtual();
-    }
-
-    function actualizarVisualizacionPalabra() {
-        let cadenaMostrar = "";
-        palabraOculta.split("").forEach(letra => {
-            if (letrasAdivinadas.includes(letra)) {
-                cadenaMostrar += letra + " ";
-            } else {
-                cadenaMostrar += "_ ";
-            }
-        });
-        contenedorPalabraSecreta.textContent = cadenaMostrar.trim();
-
-        // Validar Victoria
-        if (!cadenaMostrar.includes("_")) {
-            mensajeResultadoAhorcado.textContent = "🎉 ¡Felicidades! Descubriste la palabra.";
-            mensajeResultadoAhorcado.style.color = "#2a9d8f";
-            bloquearTeclado();
-        }
-    }
-
-    function construirTecladoVirtual() {
-        letrasTecladoVirtual.innerHTML = "";
-        const alfabeto = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split("");
-        
-        alfabeto.forEach(letra => {
-            const btnLetra = document.createElement("button");
-            btnLetra.textContent = letra;
-            btnLetra.addEventListener("click", function() {
-                this.disabled = true;
-                procesarLetraJugada(letra);
-            });
-            letrasTecladoVirtual.appendChild(btnLetra);
-        });
-    }
-
-    function procesarLetraJugada(letra) {
-        if (palabraOculta.includes(letra)) {
-            letrasAdivinadas.push(letra);
-            actualizarVisualizacionPalabra();
-        } else {
-            intentosRestantes--;
-            marcadorIntentosAhorcado.textContent = intentosRestantes;
-            if (intentosRestantes <= 0) {
-                mensajeResultadoAhorcado.textContent = `💥 Fin del juego. La palabra era: ${palabraOculta}`;
-                mensajeResultadoAhorcado.style.color = "#e63946";
-                bloquearTeclado();
-            }
-        }
-    }
-
-    function bloquearTeclado() {
-        const botones = letrasTecladoVirtual.querySelectorAll("button");
-        botones.forEach(btn => btn.disabled = true);
-    }
-
-    // GESTIÓN DE VENTANAS DEL MODAL
-    btnJugarAhorcado.addEventListener("click", () => {
-        ventanaModalAhorcado.style.display = "flex";
-        iniciarAhorcado();
-    });
-
-    btnCerrarAhorcado.addEventListener("click", () => {
-        ventanaModalAhorcado.style.display = "none";
-    });
-
-    btnReiniciarAhorcadoRapido.addEventListener("click", iniciarAhorcado);
-});
+/* =========================================================
+   FIN DE CODE POWER
+   ========================================================= */
